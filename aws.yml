@@ -1,0 +1,46 @@
+- hosts: localhost
+  vars_files:
+  - passwd.yml
+  tasks:
+  - name: start an instance and Add EBS
+    community.aws.ec2_instance:
+     name: "Instance launched using ansible"
+     region: ap-south-1
+     vpc_subnet_id: subnet-202e446c
+     instance_type: t2.micro
+     image_id: ami-0a9d27a9f4f5c0efc
+     key_name: "mykey"
+     security_group: sg-02491ed86d2c7184c
+     aws_access_key: "{{ access_key }}"
+     aws_secret_key: "{{ secret_key }}"
+  - name: Refresh inventory to ensure new instances exist in inventory
+    meta: refresh_inventory
+
+- hosts: all
+  become: yes
+  remote_user: ec2-user
+  tasks:
+  - package:
+     name: "httpd"
+     state: present
+  - copy:
+     dest: "/var/www/html/index.html"
+     content: "sssss"
+  - replace:
+     path: "/etc/httpd/conf/httpd.conf"
+     regexp: "AllowOverride None"
+     replace: "AllowOverride AuthConfig"
+  - copy:
+     dest: "/var/www/html"
+     src: "/var/www/html/.htaccess"
+  - package:
+     name: "python36"
+  - pip:
+     name: "passlib"
+  - htpasswd:
+     path: "/etc/www.passwd"
+     name: "arjun"
+     password: "arjun12b"
+  - service:
+     name: "httpd"
+     state: restarted
