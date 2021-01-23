@@ -1,0 +1,51 @@
+- hosts: localhost
+  vars_files:
+  - passwd.yml
+  tasks:
+  - name: start an instance and Add EBS
+    amazon.aws.ec2:
+     exact_count: 2
+     count_tag:
+             Type: Webserver
+     region: ap-south-1
+     vpc_subnet_id: subnet-202e446c
+     instance_type: t2.micro
+     image: ami-0a9d27a9f4f5c0efc
+     key_name: "mykey"
+     group_id: sg-02491ed86d2c7184c
+     aws_access_key: "{{ access_key }}"
+     aws_secret_key: "{{ secret_key }}"
+     instance_tags:
+             Type: Webserver
+
+  - name: start an instance and Add EBS
+    amazon.aws.ec2:
+     exact_count: 1
+     count_tag:
+             Type: Haproxy
+     region: ap-south-1
+     vpc_subnet_id: subnet-202e446c
+     instance_type: t2.micro
+     image: ami-0a9d27a9f4f5c0efc
+     key_name: "mykey"
+     group_id: sg-07970abf3ac6fbc39
+     aws_access_key: "{{ access_key }}"
+     aws_secret_key: "{{ secret_key }}"
+     instance_tags:
+             Type: Haproxy
+
+  - name: Refresh inventory to ensure new instances exist in inventory
+    meta: refresh_inventory
+
+- hosts: tag_Type_Webserver
+  become: yes
+  remote_user: ec2-user
+  roles:
+  - webserver
+                                                                                                                                                                                                
+
+- hosts: tag_Type_Haproxy
+  become: yes
+  remote_user: ec2-user
+  roles:
+  - haproxy
